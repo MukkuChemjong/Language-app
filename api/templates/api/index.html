@@ -1,0 +1,309 @@
+<!-- templates/api/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Limbu Language Learning</title>
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .app-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+        
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .lessons-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 25px;
+            padding: 20px 0;
+        }
+        
+        .lesson-card {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            overflow: hidden;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            text-decoration: none;
+            color: inherit;
+        }
+        
+        .lesson-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+            text-decoration: none;
+            color: inherit;
+        }
+        
+        .lesson-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            background: linear-gradient(45deg, #f0f0f0, #e0e0e0);
+        }
+        
+        .lesson-content {
+            padding: 20px;
+        }
+        
+        .lesson-title {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 8px;
+        }
+        
+        .lesson-subtitle {
+            color: #666;
+            font-size: 1rem;
+            margin-bottom: 12px;
+        }
+        
+        .lesson-description {
+            color: #777;
+            font-size: 0.9rem;
+            line-height: 1.4;
+            margin-bottom: 15px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        
+        .lesson-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: #999;
+            font-size: 0.85rem;
+        }
+        
+        .question-count {
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+        }
+        
+        .no-lessons {
+            text-align: center;
+            color: white;
+            font-size: 1.5rem;
+            margin: 60px 0;
+            opacity: 0.8;
+        }
+        
+        .loading {
+            text-align: center;
+            color: white;
+            font-size: 1.5rem;
+            margin: 60px 0;
+        }
+        
+        .no-image-placeholder {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(45deg, #f0f0f0, #e0e0e0);
+            color: #999;
+            font-size: 0.9rem;
+            height: 200px;
+        }
+        
+        .stats-bar {
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            margin-bottom: 30px;
+            border-radius: 10px;
+            text-align: center;
+            color: white;
+        }
+        
+        .stats-item {
+            display: inline-block;
+            margin: 0 20px;
+        }
+        
+        .stats-number {
+            font-size: 1.5rem;
+            font-weight: bold;
+            display: block;
+        }
+        
+        .stats-label {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+    </style>
+</head>
+<body>
+    <div id="react-lessons"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        function LessonsApp() {
+            const [lessons, setLessons] = useState([]);
+            const [loading, setLoading] = useState(true);
+            const [error, setError] = useState(null);
+            const [totalLessons, setTotalLessons] = useState(0);
+
+            useEffect(() => {
+                fetchLessons();
+            }, []);
+
+            const fetchLessons = async () => {
+                try {
+                    const response = await fetch('/api/lessons/');
+                    const data = await response.json();
+                    console.log('Fetched data:', data); // Debug log
+                    setLessons(data.lessons || []);
+                    setTotalLessons(data.lessons ? data.lessons.length : 0);
+                    setLoading(false);
+                } catch (error) {
+                    console.error('Error fetching lessons:', error);
+                    setError('Failed to load lessons. Please refresh the page.');
+                    setLoading(false);
+                }
+            };
+
+            const handleLessonClick = (lesson) => {
+                if (lesson.question_count === 0) {
+                    alert('This lesson has no questions yet. Please check back later!');
+                    return;
+                }
+                window.location.href = '/lesson/' + lesson.slug + '/';
+            };
+
+            if (loading) {
+                return (
+                    <div className="app-container">
+                        <div className="loading">Loading lessons...</div>
+                    </div>
+                );
+            }
+
+            if (error) {
+                return (
+                    <div className="app-container">
+                        <div className="loading">Error: {error}</div>
+                    </div>
+                );
+            }
+
+            const totalQuestions = lessons.reduce((sum, lesson) => sum + lesson.question_count, 0);
+
+            return (
+                <div className="app-container">
+                    <div className="header">
+                        <h1>Limbu Language Learning</h1>
+                        <p>Learn Limbu language through interactive lessons</p>
+                    </div>
+
+                    <div className="stats-bar">
+                        <div className="stats-item">
+                            <span className="stats-number">{totalLessons}</span>
+                            <span className="stats-label">Lessons Available</span>
+                        </div>
+                        <div className="stats-item">
+                            <span className="stats-number">{totalQuestions}</span>
+                            <span className="stats-label">Total Questions</span>
+                        </div>
+                    </div>
+
+                    {lessons.length === 0 ? (
+                        <div className="no-lessons">
+                            No lessons available yet. Check back soon!
+                        </div>
+                    ) : (
+                        <div className="lessons-grid">
+                            {lessons.map(lesson => (
+                                <div 
+                                    key={lesson.id} 
+                                    className="lesson-card"
+                                    onClick={() => handleLessonClick(lesson)}
+                                >
+                                    {lesson.image ? (
+                                        <img 
+                                            src={lesson.image} 
+                                            alt={lesson.name}
+                                            className="lesson-image"
+                                        />
+                                    ) : (
+                                        <div className="no-image-placeholder">
+                                            No image available
+                                        </div>
+                                    )}
+                                    
+                                    <div className="lesson-content">
+                                        <div className="lesson-title">
+                                            {lesson.name}
+                                        </div>
+                                        
+                                        {lesson.name_limbu && (
+                                            <div className="lesson-subtitle">
+                                                {lesson.name_limbu}
+                                            </div>
+                                        )}
+                                        
+                                        {lesson.description && (
+                                            <div className="lesson-description">
+                                                {lesson.description}
+                                            </div>
+                                        )}
+                                        
+                                        <div className="lesson-meta">
+                                            <span>
+                                                {lesson.question_count === 0 ? 'Coming Soon' : 'Interactive Quiz'}
+                                            </span>
+                                            <span className="question-count">
+                                                {lesson.question_count} questions
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            );
+        }
+
+        ReactDOM.render(<LessonsApp />, document.getElementById('react-lessons'));
+    </script>
+</body>
+</html>                

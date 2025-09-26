@@ -1,0 +1,704 @@
+<!-- templates/api/lesson_detail.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ lesson.name }} - Limbu Learning</title>
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script crossorigin src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+        
+        .quiz-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 50px rgba(0,0,0,0.15);
+            overflow: hidden;
+        }
+        
+        .quiz-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            text-align: center;
+        }
+        
+        .quiz-title {
+            font-size: 1.8rem;
+            margin-bottom: 5px;
+        }
+        
+        .quiz-subtitle {
+            font-size: 1.1rem;
+            opacity: 0.8;
+            margin-bottom: 15px;
+        }
+        
+        .quiz-progress {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .progress-bar {
+            flex: 1;
+            height: 8px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 4px;
+            margin: 0 15px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: white;
+            transition: width 0.3s ease;
+            width: 0%;
+        }
+        
+        .quiz-content {
+            padding: 40px;
+        }
+        
+        .question-section {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+        
+        .question-image {
+            width: 280px;
+            height: 280px;
+            object-fit: cover;
+            border-radius: 20px;
+            margin: 0 auto 25px;
+            display: block;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            border: 3px solid #f0f0f0;
+        }
+        
+        .no-image-placeholder {
+            width: 280px;
+            height: 280px;
+            background: linear-gradient(45deg, #f8f9fa, #e9ecef);
+            border-radius: 20px;
+            margin: 0 auto 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6c757d;
+            font-size: 1rem;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border: 3px solid #f0f0f0;
+        }
+        
+        .limbu-word {
+            font-size: 3rem;
+            font-weight: bold;
+            color: #2c3e50;
+            margin-bottom: 30px;
+            font-family: serif;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.1);
+        }
+        
+        .options-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 18px;
+            margin-bottom: 40px;
+            max-width: 700px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        
+        .option-button {
+            background: white;
+            border: 2px solid #e9ecef;
+            padding: 18px 24px;
+            border-radius: 15px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 1.1rem;
+            text-align: center;
+            min-height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 500;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .option-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+            transition: left 0.5s;
+        }
+        
+        .option-button:hover::before {
+            left: 100%;
+        }
+        
+        .option-button:hover {
+            border-color: #667eea;
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.15);
+        }
+        
+        .option-button.selected {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+        
+        .option-button.correct {
+            background: #28a745;
+            border-color: #28a745;
+            color: white;
+            transform: scale(1.02);
+            box-shadow: 0 8px 25px rgba(40, 167, 69, 0.3);
+        }
+        
+        .option-button.incorrect {
+            background: #dc3545;
+            border-color: #dc3545;
+            color: white;
+            transform: scale(0.98);
+            box-shadow: 0 5px 15px rgba(220, 53, 69, 0.3);
+        }
+        
+        .option-button:disabled {
+            cursor: not-allowed;
+        }
+        
+        .quiz-actions {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 30px;
+        }
+        
+        .action-btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .action-btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+        
+        .action-btn:hover::before {
+            left: 100%;
+        }
+        
+        .action-btn:hover {
+            background: #5a67d8;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
+        }
+        
+        .action-btn:disabled {
+            background: #adb5bd;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .action-btn:disabled::before {
+            display: none;
+        }
+        
+        .score {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .feedback {
+            padding: 20px;
+            border-radius: 15px;
+            margin: 25px 0;
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: 500;
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .feedback.correct {
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            color: #155724;
+            border: 2px solid #b8dacc;
+        }
+        
+        .feedback.incorrect {
+            background: linear-gradient(135deg, #f8d7da, #f1aeb5);
+            color: #721c24;
+            border: 2px solid #f1aeb5;
+        }
+        
+        .completion-screen {
+            text-align: center;
+            padding: 50px 40px;
+        }
+        
+        .completion-title {
+            font-size: 2.8rem;
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+        
+        .final-score {
+            font-size: 1.4rem;
+            margin-bottom: 30px;
+            color: #6c757d;
+            line-height: 1.6;
+        }
+        
+        .score-circle {
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+            font-size: 2.2rem;
+            font-weight: bold;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+            position: relative;
+        }
+        
+        .score-circle::before {
+            content: '';
+            position: absolute;
+            top: -5px;
+            left: -5px;
+            right: -5px;
+            bottom: -5px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            z-index: -1;
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.7; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+        
+        .completion-actions {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+        }
+        
+        .loading {
+            text-align: center;
+            padding: 60px;
+            color: #6c757d;
+            font-size: 1.3rem;
+        }
+        
+        .back-btn {
+            background: #6c757d;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            margin-bottom: 30px;
+            transition: all 0.3s ease;
+        }
+        
+        .back-btn:hover {
+            background: #5a6268;
+            transform: translateY(-1px);
+        }
+        
+        .performance-message {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            color: #1565c0;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            font-size: 1.1rem;
+            border: 2px solid #90caf9;
+        }
+    </style>
+</head>
+<body>
+    <div id="quiz-app"></div>
+    
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+        
+        const LESSON_SLUG = '{{ lesson.slug }}';
+        const LESSON_NAME = '{{ lesson.name|escapejs }}';
+        const LESSON_NAME_LIMBU = '{{ lesson.name_limbu|escapejs }}';
+        
+        function QuizApp() {
+            const [questions, setQuestions] = useState([]);
+            const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
+            const [selectedOption, setSelectedOption] = useState(null);
+            const [showFeedback, setShowFeedback] = useState(false);
+            const [score, setScore] = useState(0);
+            const [loading, setLoading] = useState(true);
+            const [quizCompleted, setQuizCompleted] = useState(false);
+            const [startTime, setStartTime] = useState(null);
+            const [lessonData, setLessonData] = useState(null);
+            const [completionMessage, setCompletionMessage] = useState('');
+            const progressRef = useRef(null);
+            
+            useEffect(() => {
+                fetchQuestions();
+            }, []);
+            
+            // Update progress bar width
+            useEffect(() => {
+                if (progressRef.current && questions.length > 0) {
+                    const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
+                    progressRef.current.style.width = progress + '%';
+                }
+            }, [currentQuestionIndex, questions.length]);
+            
+            const fetchQuestions = async () => {
+                try {
+                    const response = await fetch('/api/lesson/' + LESSON_SLUG + '/questions/');
+                    const data = await response.json();
+                    
+                    if (data.questions.length === 0) {
+                        setLoading(false);
+                        return;
+                    }
+                    
+                    // Shuffle options for each question
+                    const questionsWithShuffledOptions = data.questions.map(question => ({
+                        ...question,
+                        options: shuffleArray([...question.options])
+                    }));
+                    
+                    setQuestions(questionsWithShuffledOptions);
+                    setLessonData(data.lesson);
+                    setLoading(false);
+                    setStartTime(new Date());
+                } catch (error) {
+                    console.error('Error fetching questions:', error);
+                    setLoading(false);
+                }
+            };
+            
+            const shuffleArray = (array) => {
+                const shuffled = [...array];
+                for (let i = shuffled.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+                }
+                return shuffled;
+            };
+            
+            const handleOptionSelect = (option) => {
+                if (showFeedback) return;
+                setSelectedOption(option);
+            };
+            
+            const submitAnswer = async () => {
+                if (!selectedOption || !startTime) return;
+                
+                const timeSpent = Math.round((new Date() - startTime) / 1000);
+                
+                try {
+                    const response = await fetch('/api/submit-answer/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            question_id: questions[currentQuestionIndex].id,
+                            selected_option_id: selectedOption.id,
+                            time_taken: timeSpent,
+                        }),
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.success && result.is_correct) {
+                        setScore(score + 1);
+                    }
+                    
+                    setShowFeedback(true);
+                } catch (error) {
+                    console.error('Error submitting answer:', error);
+                    setShowFeedback(true);
+                }
+            };
+            
+            const nextQuestion = () => {
+                if (currentQuestionIndex < questions.length - 1) {
+                    setCurrentQuestionIndex(currentQuestionIndex + 1);
+                    setSelectedOption(null);
+                    setShowFeedback(false);
+                    setStartTime(new Date());
+                } else {
+                    completeQuiz();
+                }
+            };
+            
+            const completeQuiz = async () => {
+                const finalScore = showFeedback && checkIfCorrect(selectedOption) ? score + 1 : score;
+                
+                try {
+                    const response = await fetch('/api/complete-lesson/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            lesson_id: lessonData?.id || 1,
+                            total_questions: questions.length,
+                            correct_answers: finalScore,
+                        }),
+                    });
+                    
+                    const result = await response.json();
+                    if (result.success) {
+                        setCompletionMessage(result.message || 'Quiz completed!');
+                    }
+                } catch (error) {
+                    console.error('Error completing lesson:', error);
+                }
+                
+                setQuizCompleted(true);
+            };
+            
+            const checkIfCorrect = (option) => {
+                const currentQuestion = questions[currentQuestionIndex];
+                return currentQuestion.options.some(opt => opt.id === option.id && opt.is_correct);
+            };
+            
+            const getCorrectOption = () => {
+                const currentQuestion = questions[currentQuestionIndex];
+                return currentQuestion.options.find(opt => opt.is_correct);
+            };
+            
+            if (loading) {
+                return (
+                    <div className="quiz-container">
+                        <div className="loading">Loading quiz...</div>
+                    </div>
+                );
+            }
+            
+            if (questions.length === 0) {
+                return (
+                    <div className="quiz-container">
+                        <div className="quiz-content">
+                            <button 
+                                className="back-btn"
+                                onClick={() => window.location.href = '/'}
+                            >
+                                ← Back to Lessons
+                            </button>
+                            <div className="loading">
+                                This lesson is not ready yet. Questions are being prepared!
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+            
+            if (quizCompleted) {
+                const finalScore = score;
+                const percentage = Math.round((finalScore / questions.length) * 100);
+                
+                return (
+                    <div className="quiz-container">
+                        <div className="completion-screen">
+                            <div className="completion-title">Quiz Complete!</div>
+                            <div className="score-circle">{percentage}%</div>
+                            <div className="final-score">
+                                You scored {finalScore} out of {questions.length} questions correctly
+                            </div>
+                            {completionMessage && (
+                                <div className="performance-message">
+                                    {completionMessage}
+                                </div>
+                            )}
+                            <div className="completion-actions">
+                                <button 
+                                    className="action-btn"
+                                    onClick={() => window.location.reload()}
+                                >
+                                    Try Again
+                                </button>
+                                <button 
+                                    className="action-btn"
+                                    onClick={() => window.location.href = '/'}
+                                >
+                                    Back to Lessons
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            }
+            
+            const currentQuestion = questions[currentQuestionIndex];
+            const correctOption = getCorrectOption();
+            
+            return (
+                <div className="quiz-container">
+                    <div className="quiz-header">
+                        <div className="quiz-title">{LESSON_NAME}</div>
+                        {LESSON_NAME_LIMBU && (
+                            <div className="quiz-subtitle">{LESSON_NAME_LIMBU}</div>
+                        )}
+                        <div className="quiz-progress">
+                            <span>Question {currentQuestionIndex + 1}</span>
+                            <div className="progress-bar">
+                                <div className="progress-fill" ref={progressRef}></div>
+                            </div>
+                            <span>{questions.length} total</span>
+                        </div>
+                    </div>
+                    
+                    <div className="quiz-content">
+                        <button 
+                            className="back-btn"
+                            onClick={() => window.location.href = '/'}
+                        >
+                            ← Back to Lessons
+                        </button>
+                        
+                        <div className="question-section">
+                            {currentQuestion.subject_image ? (
+                                <img 
+                                    src={currentQuestion.subject_image} 
+                                    alt="Quiz question"
+                                    className="question-image"
+                                />
+                            ) : (
+                                <div className="no-image-placeholder">
+                                    📷 Image not available
+                                </div>
+                            )}
+                            
+                            <div className="limbu-word">
+                                {currentQuestion.subject_name_english}
+                            </div>
+                        </div>
+                        
+                        <div className="options-grid">
+                            {currentQuestion.options && currentQuestion.options.map((option, index) => {
+                                let buttonClass = 'option-button';
+                                
+                                if (showFeedback) {
+                                    if (correctOption && option.id === correctOption.id) {
+                                        buttonClass += ' correct';
+                                    } else if (selectedOption && selectedOption.id === option.id && option.id !== correctOption?.id) {
+                                        buttonClass += ' incorrect';
+                                    }
+                                } else if (selectedOption && selectedOption.id === option.id) {
+                                    buttonClass += ' selected';
+                                }
+                                
+                                return (
+                                    <button
+                                        key={option.id}
+                                        className={buttonClass}
+                                        onClick={() => handleOptionSelect(option)}
+                                        disabled={showFeedback}
+                                    >
+                                        {option.text_limbu || option.text_english}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                        
+                        {showFeedback && (
+                            <div className={'feedback' + (checkIfCorrect(selectedOption) ? ' correct' : ' incorrect')}>
+                                {checkIfCorrect(selectedOption) 
+                                    ? '🎉 Correct! Well done!' 
+                                    : '❌ Incorrect. The correct answer is highlighted in green.'}
+                            </div>
+                        )}
+                        
+                        <div className="quiz-actions">
+                            <div className="score">
+                                Score: {score}/{questions.length}
+                            </div>
+                            
+                            {!showFeedback ? (
+                                <button 
+                                    className="action-btn"
+                                    onClick={submitAnswer}
+                                    disabled={!selectedOption}
+                                >
+                                    Submit Answer
+                                </button>
+                            ) : (
+                                <button 
+                                    className="action-btn"
+                                    onClick={nextQuestion}
+                                >
+                                    {currentQuestionIndex < questions.length - 1 ? 'Next Question' : 'Complete Quiz'}
+                                </button>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+        
+        ReactDOM.render(<QuizApp />, document.getElementById('quiz-app'));
+    </script>
+</body>
+</html>
