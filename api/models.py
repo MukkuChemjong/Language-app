@@ -4,7 +4,7 @@ from django.db import models
 class Lessons(models.Model):
     name = models.CharField(max_length=200)
     name_limbu = models.CharField(max_length=200, help_text="Lesson name in Limbu", blank=True, null=True)
-    image = models.ImageField(upload_to='lessons/images/', blank=True, null=True)
+    image = models.ImageField(upload_to='lessons/')
     slug = models.SlugField(max_length=200, unique=True, blank=True, null=True)
     created_at = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     
