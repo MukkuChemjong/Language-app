@@ -43,7 +43,12 @@ class Question(models.Model):
     
     class Meta:
         ordering = ['lesson', 'order']
-        unique_together = ['lesson', 'order']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['lesson', 'order'],
+                name = 'unique_lesson_order'
+            )
+        ]
     
     def __str__(self):
         return f"{self.lesson.name} - Q{self.order}: {self.subject_name_english}"
