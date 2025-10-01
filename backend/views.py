@@ -96,7 +96,7 @@ def submit_answer(request):
         # Check if answer is correct
         is_correct = selected_option.is_correct
         
-        # Save user answer (optional - for tracking)
+
         user_answer = UserAnswer.objects.create(
             question=question,
             selected_option=selected_option,
@@ -160,3 +160,4 @@ def complete_lesson(request):
             'error': str(e)
 
         }, status=400)
+
