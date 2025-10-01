@@ -56,7 +56,7 @@ def lesson_questions_api(request, slug):
                 'order': option.order,
                 'text_english': option.option_text_english,
                 'text_limbu': option.option_text_limbu,
-                'is_correct': option.is_correct,  # Include for admin/debug, remove in production
+                'is_correct': option.is_correct,
             })
         
         questions_data.append({
@@ -158,4 +158,5 @@ def complete_lesson(request):
         return JsonResponse({
             'success': False,
             'error': str(e)
+
         }, status=400)
